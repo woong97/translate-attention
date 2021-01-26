@@ -128,7 +128,7 @@ def main(args):
     best_loss = float('inf')
     for epoch in range(args.epochs):
         start_time = time.time()
-        train_loss = train(model, valid_iter, optimizer, criterion, args.clip)
+        train_loss = train(model, train_iter, optimizer, criterion, args.clip)
         valid_loss = valid(model, valid_iter, criterion)
         end_time = time.time()
 
