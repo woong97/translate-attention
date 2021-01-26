@@ -28,7 +28,7 @@ class Transformer(nn.Module):
         """
         output_pad_mask = (output != self.output_pad_idx).unsqueeze(1).unsqueeze(2)
         output_len = output.shape[1]
-        output_sub_mask = torch.tril([torch.ones((output_len, output_len))]).bool()
+        output_sub_mask = torch.tril(torch.ones((output_len, output_len))).bool()
 
         output_mask = output_pad_mask & output_sub_mask
         return output_mask

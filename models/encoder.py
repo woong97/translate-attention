@@ -45,7 +45,7 @@ class Encoder(nn.Module):
         input_len = input.shape[1]
 
         # Instead of sin, cos functions, use Embedding layer
-        position = torch.arrange(0, input_len).unsqueeze(0).repeat(N, 1)
+        position = torch.arange(0, input_len).unsqueeze(0).repeat(N, 1)
         positional_encoding = self.positional_embedding(position)
 
         input = self.token_embedding(input) * self.scale + positional_encoding

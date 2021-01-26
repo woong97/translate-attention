@@ -15,7 +15,7 @@ class DecoderLayer(nn.Module):
         self.feed_forward = FeedForward(hidden_dim, inner_dim, dropout)
         self.dropout = nn.Dropout(dropout)
 
-    def forwrad(self, output, from_encoder, output_mask, input_mask):
+    def forward(self, output, from_encoder, output_mask, input_mask):
         """
         :output: [N x output_len x hidden_dim]
         :from_encoder: [N x input_len x hidden_dim]
@@ -25,7 +25,7 @@ class DecoderLayer(nn.Module):
         # self attention
         output_, _ = self.self_attention(output, output, output, output_mask)
         output_ = self.dropout(output_)
-        target = self.layer_norm1(output + output_)
+        output = self.layer_norm1(output + output_)
 
         # attention with encoder and decoder
         # query: output, key : from_encoder, value: from_encoder
@@ -72,18 +72,14 @@ class Decoder(nn.Module):
         N = output.shape[0]
         output_len = output.shape[1]
 
-        position = torch.arrange(0, output_len).unsqueeze(0).repeat(N, 1)
+        position = torch.arange(0, output_len).unsqueeze(0).repeat(N, 1)
         positional_encoding = self.positional_embedding(position)
 
         output = self.token_embedding(output) * self.scale + positional_encoding
         output = self.dropout(output)
 
         for layer in self.layers:
-            output, attention_score = layer(output,
-                                            from_encoder,
-                                            output_mask,
-                                            input_mask
-                                        )
+            output, attention_score = layer(output, from_encoder, output_mask, input_mask)
         output = self.out(output)
         return output, attention_score
 
