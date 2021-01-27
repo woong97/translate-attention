@@ -3,13 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Transformer(nn.Module):
-    def __init__(self, encoder, decoder, input_pad_idx, output_pad_idx, device):
+    def __init__(self, encoder, decoder, input_pad_idx, output_pad_idx, output_eos_idx, device):
         super().__init__()
 
         self.encoder = encoder
         self.decoder = decoder
         self.input_pad_idx = input_pad_idx
         self.output_pad_idx = output_pad_idx
+        self.output_eos_idx = output_eos_idx
         self.device = device
 
     # input mask check only <pad> token
@@ -28,10 +29,11 @@ class Transformer(nn.Module):
         return output_mask : [N x 1 x output_len x output_len]
         """
         output_pad_mask = (output != self.output_pad_idx).unsqueeze(1).unsqueeze(2)
+        output_eos_mask = (output != self.output_eos_idx).unsqueeze(1).unsqueeze(2)
         output_len = output.shape[1]
         output_sub_mask = torch.tril(torch.ones((output_len, output_len), device=self.device)).bool()
 
-        output_mask = output_pad_mask & output_sub_mask
+        output_mask = output_pad_mask & output_sub_mask & output_eos_mask
         return output_mask
 
     def forward(self, input, output):

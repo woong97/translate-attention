@@ -40,8 +40,8 @@ class MultiHeadAttention(nn.Module):
         q = self.fc_q(query)
         k = self.fc_k(key)
         v = self.fc_v(value)
-
-        # unsqueeze for multi heads /
+        # unsqueeze for multi heads
+        # q,k,v : [N x len x hidden_dim] => q,k,v : [N x heads x len x (hidden_dim / heads)]
         q = q.view(N, -1, self.heads, self.head_dim).permute([0, 2, 1, 3])
         k = k.view(N, -1, self.heads, self.head_dim).permute([0, 2, 1, 3])
         v = v.view(N, -1, self.heads, self.head_dim).permute([0, 2, 1, 3])

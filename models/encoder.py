@@ -14,6 +14,7 @@ class EncoderLayer(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, input, input_mask):
+        # input : [N x len x hidden_dim], input_mask : [N x 1 x 1 x  len]
         input_, _ = self.self_attention(input, input, input, input_mask)
         input_ = self.dropout(input_)
         input = self.layer_norm1(input + input_)
@@ -49,6 +50,7 @@ class Encoder(nn.Module):
         position = torch.arange(0, input_len).unsqueeze(0).repeat(N, 1).to(self.device)
         positional_encoding = self.positional_embedding(position)
 
+        # input : [N x input_len] => [N x input_len x hidden_dim]
         input = self.token_embedding(input) * self.scale + positional_encoding
         input = self.dropout(input)
 

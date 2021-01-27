@@ -106,6 +106,7 @@ def main(args):
 
     SRC_PAD_IDX = SRC.vocab.stoi[SRC.pad_token]
     TRG_PAD_IDX = TRG.vocab.stoi[TRG.pad_token]
+    TFG_EOS_IDX = TRG.vocab.stoi[TRG.eos_token]
 
     encoder = Encoder(INPUT_DIM, args.hidden_dim, args.n_layers,
                       args.heads, args.inner_dim, args.dropout, device
@@ -114,7 +115,9 @@ def main(args):
                       args.heads, args.inner_dim, args.dropout, device
                       )
 
-    model = Transformer(encoder, decoder, SRC_PAD_IDX, TRG_PAD_IDX, device).to(device)
+    model = Transformer(encoder, decoder, SRC_PAD_IDX,
+                        TRG_PAD_IDX, TFG_EOS_IDX, device
+                        ).to(device)
     model.apply(init_weight)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
