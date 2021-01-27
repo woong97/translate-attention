@@ -108,13 +108,13 @@ def main(args):
     TRG_PAD_IDX = TRG.vocab.stoi[TRG.pad_token]
 
     encoder = Encoder(INPUT_DIM, args.hidden_dim, args.n_layers,
-                      args.heads, args.inner_dim, args.dropout
+                      args.heads, args.inner_dim, args.dropout, device
                       )
     decoder = Decoder(OUTPUT_DIM, args.hidden_dim, args.n_layers,
-                      args.heads, args.inner_dim, args.dropout
+                      args.heads, args.inner_dim, args.dropout, device
                       )
 
-    model = Transformer(encoder, decoder, SRC_PAD_IDX, TRG_PAD_IDX).to(device)
+    model = Transformer(encoder, decoder, SRC_PAD_IDX, TRG_PAD_IDX, device).to(device)
     model.apply(init_weight)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
@@ -139,6 +139,9 @@ def main(args):
 
         print(f"Epoch: {epoch} | Takes {end_time-start_time} seconds")
         print(f"Train Loss: {train_loss:.3f}, Valid Loss: {valid_loss:.3f}")
+
+    # Test Result
+    test(model, test_iter, criterion)
 
 
 if __name__ == "__main__":

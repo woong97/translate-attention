@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, hidden_dim, heads, dropout):
+    def __init__(self, hidden_dim, heads, dropout, device):
         super().__init__()
 
         assert hidden_dim % heads == 0
@@ -13,7 +13,7 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = hidden_dim // heads
 
         self.dropout = nn.Dropout(dropout)
-        self.scale = torch.sqrt(torch.FloatTensor([self.head_dim]))
+        self.scale = torch.sqrt(torch.FloatTensor([self.head_dim])).to(device)
 
         self.fc_q = nn.Linear(hidden_dim, hidden_dim)
         self.fc_k = nn.Linear(hidden_dim, hidden_dim)
