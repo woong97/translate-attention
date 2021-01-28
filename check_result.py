@@ -65,7 +65,10 @@ def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=Tru
     if logging:
         print("Translated tokens:", translated_tokens)
 
-    return translated_tokens
+    return translated_tokens, attention
+
+def visualization():
+    print("==start visualization")
 
 
 
