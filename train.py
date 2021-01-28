@@ -9,11 +9,7 @@ from models.encoder import *
 from models.transformer import *
 from torchtext.datasets import Multi30k
 from torchtext.data import Field, BucketIterator
-
-
-# Tokenization english and german
-SPACY_EN = spacy.load('en')
-SPACY_DE = spacy.load('de')
+from check_result import *
 
 
 def tokenize_de(text):
@@ -22,9 +18,6 @@ def tokenize_de(text):
 
 def tokenize_en(text):
     return [token.text for token in SPACY_EN.tokenizer(text)]
-
-SRC = Field(tokenize=tokenize_de, init_token="<sos>", eos_token="<eos>", lower=True, batch_first=True)
-TRG = Field(tokenize=tokenize_en, init_token="<sos>", eos_token="<eos>", lower=True, batch_first=True)
 
 
 def build_vocab(dataset, min_freq):
@@ -91,14 +84,11 @@ def test(model, test_iter, criterion):
     print(f'Test Loss: {test_loss:.3f}')
 
 
-def main(args):
-    train_dataset, valid_dataset, test_dataset = Multi30k.splits(exts=(".de", ".en"), fields=(SRC, TRG))
-
+def main(args, train_dataset, valid_dataset, test_dataset):
     print(f"length of training dataset : {len(train_dataset.examples)}")
     print(f"length of validation dataset: {len(valid_dataset.examples)}")
     print(f"length of testing dataset: {len(test_dataset.examples)}")
 
-    build_vocab(train_dataset, min_freq=args.min_freq)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     INPUT_DIM = len(SRC.vocab)
@@ -146,7 +136,6 @@ def main(args):
     # Test Result
     test(model, test_iter, criterion)
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train hyperparameters")
     parser.add_argument('--batch_size', default=128, required=False, type=int,
@@ -169,9 +158,26 @@ if __name__ == "__main__":
                         help='learning rate')
     parser.add_argument('--clip', default=1, required=False, type=float,
                         help='learning rate')
+    parser.add_argument('--do_train', default=False, required=False, type=bool)
+    parser.add_argument('--do_translate', default=True, required=False, type=bool)
+
 
     args = parser.parse_args()
 
-    main(args)
+
+    # Tokenization english and german
+    SPACY_EN = spacy.load('en')
+    SPACY_DE = spacy.load('de')
+
+    SRC = Field(tokenize=tokenize_de, init_token="<sos>", eos_token="<eos>", lower=True, batch_first=True)
+    TRG = Field(tokenize=tokenize_en, init_token="<sos>", eos_token="<eos>", lower=True, batch_first=True)
+
+    train_dataset, valid_dataset, test_dataset = Multi30k.splits(exts=(".de", ".en"), fields=(SRC, TRG))
+    build_vocab(train_dataset, min_freq=args.min_freq)
+
+    if args.do_train:
+        main(args, train_dataset, valid_dataset, test_dataset)
+    if args.do_translate:
+        translate(args, test_dataset, SRC, TRG, example_idx=80)
 
 
