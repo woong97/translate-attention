@@ -3,14 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, hidden_dim, heads, dropout, device):
+    def __init__(self, hidden_dim, n_heads, dropout, device):
         super().__init__()
 
-        assert hidden_dim % heads == 0
+        assert hidden_dim % n_heads == 0
 
         self.hidden_dim = hidden_dim
-        self.heads = heads
-        self.head_dim = hidden_dim // heads
+        self.n_heads = n_heads
+        self.head_dim = hidden_dim // n_heads
 
         self.dropout = nn.Dropout(dropout)
         self.scale = torch.sqrt(torch.FloatTensor([self.head_dim])).to(device)
@@ -41,10 +41,10 @@ class MultiHeadAttention(nn.Module):
         k = self.fc_k(key)
         v = self.fc_v(value)
         # unsqueeze for multi heads
-        # q,k,v : [N x len x hidden_dim] => q,k,v : [N x heads x len x (hidden_dim / heads)]
-        q = q.view(N, -1, self.heads, self.head_dim).permute([0, 2, 1, 3])
-        k = k.view(N, -1, self.heads, self.head_dim).permute([0, 2, 1, 3])
-        v = v.view(N, -1, self.heads, self.head_dim).permute([0, 2, 1, 3])
+        # q,k,v : [N x len x hidden_dim] => q,k,v : [N x n_heads x len x (hidden_dim / heads)]
+        q = q.view(N, -1, self.n_heads, self.head_dim).permute([0, 2, 1, 3])
+        k = k.view(N, -1, self.n_heads, self.head_dim).permute([0, 2, 1, 3])
+        v = v.view(N, -1, self.n_heads, self.head_dim).permute([0, 2, 1, 3])
 
         x, attention_score = self.scaled_dot_prodcution(q, k, v, mask)
 

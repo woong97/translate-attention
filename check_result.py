@@ -1,10 +1,14 @@
+import os
 import spacy
 from models.decoder import *
 from models.encoder import *
 from models.transformer import *
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 
 def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=True):
+    print("==== Translate Examples ====")
     src = vars(test_dataset.examples[example_idx])['src']
     trg = vars(test_dataset.examples[example_idx])['trg']
 
@@ -20,15 +24,19 @@ def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=Tru
     TFG_EOS_IDX = TRG.vocab.stoi[TRG.eos_token]
 
     encoder = Encoder(INPUT_DIM, args.hidden_dim, args.n_layers,
-                      args.heads, args.inner_dim, args.dropout, device
+                      args.n_heads, args.inner_dim, args.dropout, device
                       )
     decoder = Decoder(OUTPUT_DIM, args.hidden_dim, args.n_layers,
-                      args.heads, args.inner_dim, args.dropout, device
+                      args.n_heads, args.inner_dim, args.dropout, device
                       )
     model = Transformer(encoder, decoder, SRC_PAD_IDX,
                         TRG_PAD_IDX, TFG_EOS_IDX, device
                         ).to(device)
-    model.load_state_dict(torch.load('./save_model/translate.pt', map_location=device))
+    model.load_state_dict(
+        torch.load(
+            os.path.join(args.save_model_path, "translate.pt"), map_location=device
+            )
+        )
     model.eval()
 
     if isinstance(src, str):
@@ -60,15 +68,32 @@ def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=Tru
         if pred_token == TRG.vocab.stoi[TRG.eos_token]:
             break
     trg_tokens = [TRG.vocab.itos[i] for i in trg_indexes]
-    translated_tokens = trg_tokens[1:-1]
+    translated_tokens = trg_tokens[1:]
 
     if logging:
         print("Translated tokens:", translated_tokens)
 
-    return translated_tokens, attention
+    return src, translated_tokens, attention
 
-def visualization():
-    print("==start visualization")
+def visualize_attention(args, src, translated, attention, n_heads=8, n_rows=4, n_cols=2):
+    assert n_rows * n_cols == n_heads
+    assert args.n_heads == n_heads
+    print("==== Visualize attention Examples ====")
+
+    fig = plt.figure(figsize=(15, 25))
+
+    for i in range(n_heads):
+        ax = fig.add_subplot(n_rows, n_cols, i+1)
+        attention_ = attention.squeeze(0)[i].cpu().detach().numpy()
+        cax = ax.matshow(attention_, cmap='bone')
+
+        ax.tick_params(labelsize=12)
+        ax.set_xticklabels([''] + ['<sos>'] + [t.lower() for t in src] + ['<eos>'], rotation=45)
+        ax.set_yticklabels([''] + translated)
+
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+    plt.show()
 
 
 

@@ -1,5 +1,5 @@
 # This code is from https://github.com/ndb796/Deep-Learning-Paper-Review-and-Practice
-
+import os
 import torch
 import time
 import spacy
@@ -78,13 +78,15 @@ def valid(model, valid_iter, criterion):
     return val_loss
 
 
-def test(model, test_iter, criterion):
-    model.load_state_dict(torch.load('./save_model/translate.pt'))
+def test(args, model, test_iter, criterion):
+    model.load_state_dict(torch.load(os.path.join(args.save_model_path, "translate.pt")))
     test_loss = valid(model, test_iter, criterion)
     print(f'Test Loss: {test_loss:.3f}')
 
 
 def main(args, train_dataset, valid_dataset, test_dataset):
+    assert os.path.exists(args.save_model_path), "Make directory for saving model"
+
     print(f"length of training dataset : {len(train_dataset.examples)}")
     print(f"length of validation dataset: {len(valid_dataset.examples)}")
     print(f"length of testing dataset: {len(test_dataset.examples)}")
@@ -99,10 +101,10 @@ def main(args, train_dataset, valid_dataset, test_dataset):
     TFG_EOS_IDX = TRG.vocab.stoi[TRG.eos_token]
 
     encoder = Encoder(INPUT_DIM, args.hidden_dim, args.n_layers,
-                      args.heads, args.inner_dim, args.dropout, device
+                      args.n_heads, args.inner_dim, args.dropout, device
                       )
     decoder = Decoder(OUTPUT_DIM, args.hidden_dim, args.n_layers,
-                      args.heads, args.inner_dim, args.dropout, device
+                      args.n_heads, args.inner_dim, args.dropout, device
                       )
 
     model = Transformer(encoder, decoder, SRC_PAD_IDX,
@@ -125,16 +127,14 @@ def main(args, train_dataset, valid_dataset, test_dataset):
         valid_loss = valid(model, valid_iter, criterion)
         end_time = time.time()
 
-        if valid_loss < best_loss:
-            best_loss = valid_loss
-            torch.save(model.state_dict(), './save_model/translate.pt')
-            print("==== model is saved")
-
         print(f"Epoch: {epoch} | Takes {end_time-start_time} seconds")
         print(f"Train Loss: {train_loss:.3f}, Valid Loss: {valid_loss:.3f}")
-
+        if valid_loss < best_loss:
+            best_loss = valid_loss
+            torch.save(model.state_dict(), os.path.join(args.save_model_path, "translate.pt"))
+            print("==== model is saved")
     # Test Result
-    test(model, test_iter, criterion)
+    test(args, model, test_iter, criterion)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train hyperparameters")
@@ -148,7 +148,7 @@ if __name__ == "__main__":
                         help='feed forward inner dimension')
     parser.add_argument('--n_layers', default=3, required=False, type=int,
                         help='numbers of encoder or decoder layers')
-    parser.add_argument('--heads', default=8, required=False, type=int,
+    parser.add_argument('--n_heads', default=8, required=False, type=int,
                         help='numbers of multi head')
     parser.add_argument('--dropout', default=0.1, required=False, type=float,
                         help='dropout of networks')
@@ -158,6 +158,7 @@ if __name__ == "__main__":
                         help='learning rate')
     parser.add_argument('--clip', default=1, required=False, type=float,
                         help='learning rate')
+    parser.add_argument('--save_model_path', default="save_model", required=False, type=str)
     parser.add_argument('--do_train', default=False, required=False, type=bool)
     parser.add_argument('--do_translate', default=True, required=False, type=bool)
 
@@ -178,6 +179,6 @@ if __name__ == "__main__":
     if args.do_train:
         main(args, train_dataset, valid_dataset, test_dataset)
     if args.do_translate:
-        translate(args, test_dataset, SRC, TRG, example_idx=80)
-
+        src, translated, attention = translate(args, test_dataset, SRC, TRG, example_idx=80)
+        visualize_attention(args, src, translated, attention)
 

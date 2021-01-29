@@ -1,7 +1,7 @@
 from models.attention_layer import *
 
 class EncoderLayer(nn.Module):
-    def __init__(self, hidden_dim, heads, inner_dim, dropout, device):
+    def __init__(self, hidden_dim, n_heads, inner_dim, dropout, device):
         super().__init__()
 
         # layer_norm1 : After Mutli-Head Attention
@@ -9,7 +9,7 @@ class EncoderLayer(nn.Module):
         self.layer_norm1 = nn.LayerNorm(hidden_dim)
         self.layer_norm2 = nn.LayerNorm(hidden_dim)
 
-        self.self_attention = MultiHeadAttention(hidden_dim, heads, dropout, device)
+        self.self_attention = MultiHeadAttention(hidden_dim, n_heads, dropout, device)
         self.feed_forward = FeedForward(hidden_dim, inner_dim, dropout)
         self.dropout = nn.Dropout(dropout)
 
@@ -27,7 +27,7 @@ class EncoderLayer(nn.Module):
 
 class Encoder(nn.Module):
     def __init__(self, input_dim, hidden_dim, n_layers,
-                heads, inner_dim, dropout, device, max_length=100):
+                n_heads, inner_dim, dropout, device, max_length=100):
         super().__init__()
 
         self.device = device
@@ -35,7 +35,7 @@ class Encoder(nn.Module):
         self.positional_embedding = nn.Embedding(max_length, hidden_dim)
 
         self.layers = nn.ModuleList(
-                            [EncoderLayer(hidden_dim, heads, inner_dim, dropout, device)
+                            [EncoderLayer(hidden_dim, n_heads, inner_dim, dropout, device)
                             for _ in range(n_layers)]
                             )
         self.dropout = nn.Dropout(dropout)

@@ -43,8 +43,6 @@ class Transformer(nn.Module):
         """
         input_mask = self.get_input_mask(input)
         output_mask = self.get_output_mask(output)
-        print("===output shape:", output.shape)
-        print("===output mask shape:", output_mask.shape)
 
         from_eoncder = self.encoder(input, input_mask)
         output, attention_score = self.decoder(output,
