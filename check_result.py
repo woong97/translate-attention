@@ -35,8 +35,8 @@ def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=Tru
     model.load_state_dict(
         torch.load(
             os.path.join(args.save_model_path, "translate.pt"), map_location=device
-            )
         )
+    )
     model.eval()
 
     if isinstance(src, str):
@@ -74,6 +74,7 @@ def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=Tru
         print("Translated tokens:", translated_tokens)
 
     return src, translated_tokens, attention
+
 
 def visualize_attention(args, src, translated, attention, n_heads=8, n_rows=4, n_cols=2):
     assert n_rows * n_cols == n_heads

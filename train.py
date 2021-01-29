@@ -1,6 +1,5 @@
 # This code is from https://github.com/ndb796/Deep-Learning-Paper-Review-and-Practice
 import os
-import torch
 import time
 import spacy
 import argparse
@@ -56,6 +55,7 @@ def train(model, train_iter, optimizer, criterion, clip):
 
     train_loss = train_loss / len(train_iter)
     return train_loss
+
 
 def valid(model, valid_iter, criterion):
     model.eval()
@@ -136,6 +136,7 @@ def main(args, train_dataset, valid_dataset, test_dataset):
     # Test Result
     test(args, model, test_iter, criterion)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train hyperparameters")
     parser.add_argument('--batch_size', default=128, required=False, type=int,
@@ -162,10 +163,9 @@ if __name__ == "__main__":
     parser.add_argument('--do_train', default=False, required=False, type=bool)
     parser.add_argument('--do_translate', default=True, required=False, type=bool)
 
-
     args = parser.parse_args()
 
-
+    # If data is not existed, download data automatically
     # Tokenization english and german
     SPACY_EN = spacy.load('en')
     SPACY_DE = spacy.load('de')
