@@ -179,6 +179,7 @@ if __name__ == "__main__":
     if args.do_train:
         main(args, train_dataset, valid_dataset, test_dataset)
     if args.do_translate:
-        src, translated, attention = translate(args, test_dataset, SRC, TRG, example_idx=80)
-        visualize_attention(args, src, translated, attention)
+        #src, translated, attention = translate_example(args, test_dataset, SRC, TRG, example_idx=20)
+        #visualize_attention(args, src, translated, attention)
+        check_bleu_score(args, test_dataset, SRC, TRG)
 

@@ -5,15 +5,10 @@ from models.encoder import *
 from models.transformer import *
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from torchtext.data.metrics import bleu_score
 
 
-def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=True):
-    print("==== Translate Examples ====")
-    src = vars(test_dataset.examples[example_idx])['src']
-    trg = vars(test_dataset.examples[example_idx])['trg']
-
-    print(f'Source tokens: {src}')
-    print(f'Target tokens: {trg}')
+def translate(args, src, SRC, TRG, max_len=50, logging=True):
     device = torch.device('cpu')
 
     INPUT_DIM = len(SRC.vocab)
@@ -76,6 +71,16 @@ def translate(args, test_dataset, SRC, TRG, example_idx, max_len=50, logging=Tru
     return src, translated_tokens, attention
 
 
+def translate_example(args, test_dataset, SRC, TRG, example_idx):
+    print("==== Translate Examples ====")
+    src = vars(test_dataset.examples[example_idx])['src']
+    trg = vars(test_dataset.examples[example_idx])['trg']
+
+    print(f'Source tokens: {src}')
+    print(f'Target tokens: {trg}')
+    return translate(args, src, SRC, TRG)
+
+
 def visualize_attention(args, src, translated, attention, n_heads=8, n_rows=4, n_cols=2):
     assert n_rows * n_cols == n_heads
     assert args.n_heads == n_heads
@@ -97,4 +102,44 @@ def visualize_attention(args, src, translated, attention, n_heads=8, n_rows=4, n
     plt.show()
 
 
+def check_bleu_score(args, dataset, SRC, TRG, max_len=50):
+    trgs = []
+    pred_trgs = []
+    index = 0
+    for data in dataset:
+        src = vars(data)['src']
+        trg = vars(data)['trg']
 
+        _, pred_trg, _ = translate(args, src, SRC, TRG, logging=False)
+        pred_trg = pred_trg[:-1]
+        pred_trgs.append(pred_trg)
+        trgs.append([trg])
+
+        index += 1
+        if (index+1) % 100 ==0:
+            print(f"[{index+1}/{len(dataset)}]")
+            print(f"Predict: {pred_trg}")
+            print(f"Anser: {trg}")
+
+    belu_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[0.25, 0.25, 0.25, 0.25])
+    print(f"Total BLEU Score = {belu_score*100:.2f}")
+
+    individual_bleu1_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[1, 0, 0, 0])
+    individual_bleu2_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[0, 1, 0, 0])
+    individual_bleu3_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[0, 0, 1, 0])
+    individual_bleu4_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[0, 0, 0, 1])
+
+    print(f'Individual BLEU1 score = {individual_bleu1_score * 100:.2f}')
+    print(f'Individual BLEU2 score = {individual_bleu2_score * 100:.2f}')
+    print(f'Individual BLEU3 score = {individual_bleu3_score * 100:.2f}')
+    print(f'Individual BLEU4 score = {individual_bleu4_score * 100:.2f}')
+
+    cumulative_bleu1_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[1, 0, 0, 0])
+    cumulative_bleu2_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[1/2, 1/2, 0, 0])
+    cumulative_bleu3_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[1/3, 1/3, 1/3, 0])
+    cumulative_bleu4_score = bleu_score(pred_trgs, trgs, max_n=4, weights=[1/4, 1/4, 1/4, 1/4])
+
+    print(f'Cumulative BLEU1 score = {cumulative_bleu1_score * 100:.2f}')
+    print(f'Cumulative BLEU2 score = {cumulative_bleu2_score * 100:.2f}')
+    print(f'Cumulative BLEU3 score = {cumulative_bleu3_score * 100:.2f}')
+    print(f'Cumulative BLEU4 score = {cumulative_bleu4_score * 100:.2f}')
